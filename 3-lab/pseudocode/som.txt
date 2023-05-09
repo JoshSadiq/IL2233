@@ -1,0 +1,14 @@
+
+void SOM(t_pos *assignment, double *data, int n_samples, int m_features, int height, int width, int max_iter, float lr, float sigma):
+    int[] input_array
+    int[][] output_matrix
+    int[][] weights
+
+    # Init random weights 
+    for i in range(0, len(input_array))
+        for j in range(0, len(output_matrix[])):
+            weights[i][j] = randomint(0,1)
+    
+    # Find BMU for each input using distance metric
+    for each weight, calculate "distance" using some func.      # How is this calculated? What is distance in this context?
+    
