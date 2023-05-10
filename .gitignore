@@ -1,4 +1,6 @@
 .venv/
+*.out
+out.txt
 */.ipynb_checkpoints/
 1-lab/readme.txt
 1-lab/Images/ACFPACFsine.png
