@@ -25,15 +25,3 @@ function kmeans(...)
                 if dist_to_cluster < currently_best_dist:
                     best_cluster = c
             symboltable[p] = best_cluster
-
-        # calculate loss function
-        for each cluster c:
-            int[] points_in_cluster
-            for each data point p:
-                if symboltable[p] == c:
-                    points_in_cluster.append(p)
-            double new_loss_result = lossfunc(points_in_cluster)
-            if new_loss_result ≈ last_loss_result:
-                break
-    
-    # print points in each cluster, we have the final result
