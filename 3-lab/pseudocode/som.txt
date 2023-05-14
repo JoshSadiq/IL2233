@@ -1,14 +1,37 @@
+function SOM(...)
+int map_width
+int map_height
+double learning_rate = 0.1
+double neighborhood_radius = 0.5
+double decay_rate = 0.95
+double[][] weight_vectors[map_width][map_height]
 
-void SOM(t_pos *assignment, double *data, int n_samples, int m_features, int height, int width, int max_iter, float lr, float sigma):
-    int[] input_array
-    int[][] output_matrix
-    int[][] weights
+# initialize weight vectors with random values
+for each neuron n in the map:
+    weight_vectors[n.x][n.y] = random_vector(input_dim)
 
-    # Init random weights 
-    for i in range(0, len(input_array))
-        for j in range(0, len(output_matrix[])):
-            weights[i][j] = randomint(0,1)
+# iterate over the data
+for each input vector v:
+    # find the best matching unit
+    double best_distance = DOUBLE_MAX
+    int best_x, best_y
+    for each neuron n in the map:
+        distance_to_input = dist(v, weight_vectors[n.x][n.y])
+        if distance_to_input < best_distance:
+            best_distance = distance_to_input
+            best_x = n.x
+            best_y = n.y
     
-    # Find BMU for each input using distance metric
-    for each weight, calculate "distance" using some func.      # How is this calculated? What is distance in this context?
+    # update the weights of the BMU and its neighbors
+    for each neuron n in the map:
+        distance_to_bmu = dist(n, best_x, best_y)
+        if distance_to_bmu <= neighborhood_radius:
+            influence = exp(-distance_to_bmu^2 / (2 * neighborhood_radius^2))
+            new_weight_vector = weight_vectors[n.x][n.y] 
+                                + learning_rate * influence 
+                                * (v - weight_vectors[n.x][n.y])
+            weight_vectors[n.x][n.y] = new_weight_vector
     
+    # decay the learning rate and neighborhood radius
+    learning_rate = learning_rate * decay_rate
+    neighborhood_radius = neighborhood_radius * decay_rate
