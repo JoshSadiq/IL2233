@@ -99,10 +99,10 @@ void compute_umatrix(double *map, double *umatrix, int height, int width) {
 
 int main() {
     // Example usage
-    int n_samples = 5;
-    int m_features = 3;
-    int height = 4;
-    int width = 4;
+    int n_samples = 100;
+    int m_features = 5;
+    int height = 20;
+    int width = 20;
     int max_iter = 100;
     float lr = 0.1;
     float sigma = 5.0;
