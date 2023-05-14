@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <string.h>
 
 typedef struct {
     int x;
@@ -71,6 +72,7 @@ void SOM(t_pos *assignment, double *data, int n_samples, int m_features, int hei
 }
 
 
+// Not used at the moment
 void compute_umatrix(double *map, double *umatrix, int height, int width) {
     for (int i = 0; i < height * width; i++) {
         double sum = 0;
@@ -99,28 +101,64 @@ void compute_umatrix(double *map, double *umatrix, int height, int width) {
 
 int main() {
     // Example usage
-    int n_samples = 100;
-    int m_features = 5;
-    int height = 20;
-    int width = 20;
+    // int n_samples = 100;
+    // int m_features = 5;
+    // int height = 20;
+    // int width = 20;
+    // int max_iter = 100;
+    // float lr = 0.1;
+    // float sigma = 5.0;
+    // double *data = malloc(n_samples * m_features * sizeof(double));
+    // for (int i = 0; i < n_samples * m_features; i++) {
+    //     data[i] = ((double) rand() /    (RAND_MAX)) * 10.0;
+    // }
+
+
+    // IRIS dataset
+    int n_samples = 150;
+    int m_features = 4;
+    int height = 10;
+    int width = 15;
     int max_iter = 100;
     float lr = 0.1;
     float sigma = 5.0;
     double *data = malloc(n_samples * m_features * sizeof(double));
-    for (int i = 0; i < n_samples * m_features; i++) {
-        data[i] = ((double) rand() /    (RAND_MAX)) * 10.0;
-}
-t_pos *assignment = malloc(n_samples * sizeof(t_pos));
-SOM(assignment, data, n_samples, m_features, height, width, max_iter, lr, sigma);
+
+    FILE *fp;
+    char line[100];
+    char *token;
+    char *eptr;
+    int i = 0;
+
+    fp = fopen("datasets/iris_mod.txt", "r");
+
+    if (fp == NULL) {
+        printf("Error opening file\n");
+        return 1;
+    }
+
+    while (fgets(line, 100, fp) != NULL) {
+        // split the line into tokens based on comma delimiter
+        token = strtok(line, ",");
+        data[i] = strtod(token, &eptr);
+        i++;
+    }
+    fclose(fp);
+
+    t_pos *assignment = malloc(n_samples * sizeof(t_pos));
+    SOM(assignment, data, n_samples, m_features, height, width, max_iter, lr, sigma);
 
 
-for (int s = 0; s < n_samples; s++) {
-    printf("(%d, %d) ", assignment[s].x, assignment[s].y);
-}
-    printf("\n");
-    free(data);
-    free(assignment);
-    return 0;
+    for (int s = 0; s < n_samples; s++) {
+        printf("(%d, %d) ", assignment[s].x, assignment[s].y);
+        if (s%10 == 0 && s != 0) {
+            printf("\n");
+        }
+    }
+        printf("\n");
+        free(data);
+        free(assignment);
+        return 0;
 }
 
 
