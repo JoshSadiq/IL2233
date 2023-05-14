@@ -1,0 +1,27 @@
+
+function kmeans(...)
+    int[] symboltable[datapoints]
+    double last_loss_result = DOUBLE_MAX
+    double[] centroids[clusters] # values are location in 1d/2d space
+    
+    for each index in symboltable:
+        symboltable[p] = randomint(1, k) # Value equals the cluster the data point p belongs to, instead of symbol matrix
+
+    while 1:
+        # find centroid for each cluster
+        for each cluster c:
+            int[] points_in_cluster
+            for each data point p:
+                if symboltable[p] == c:
+                    points_in_cluster.append(p)
+            centroid = func(cluster_points) # maybe avg of distance to points
+            centroids[c] = centroid
+        
+        for each data point p:
+            int best_cluster = symboltable[p]
+            double currently_best_dist = dist(p, centroids[best_cluster])
+            for each cluster c:
+                dist_to_cluster = dist(p, centroids[c])
+                if dist_to_cluster < currently_best_dist:
+                    best_cluster = c
+            symboltable[p] = best_cluster
