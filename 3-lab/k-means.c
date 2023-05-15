@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -5,53 +6,63 @@
 #include <time.h>
 #include <stdbool.h>
 #include <float.h>
+#include "data.h"
 
-#define THRESHOLD 0.0001
-
-void genTimeSeriesSamples(double *data, int samples, int observations) {
-    srand(time(NULL));
-    for (int sample = 0; sample < samples; sample++)
-        for (int observation = 0; observation < observations; observation++)
-            data[sample*samples+observation] = (double)rand() / RAND_MAX * 10.0 - 5.0;
-}
+/* *********************************************************************
+*********************** HELPER FUNCTIONS *******************************
+********************************************************************* */
 
 void displayTimeSeries(double *data, int samples, int observations) {
-    for (int sample = 0; sample < samples; sample++) {
-        printf("Sample %d: ", sample+1);
-        for (int observation = 0; observation < observations; observation++) {
-            if (observation % 8 == 0 && observation != 0)
+    for (int s = 0; s < samples; s++) {
+        printf("Sample %d: ", s+1);
+        for (int o = 0; o < observations; o++) {
+            if (o % 8 == 0 && o != 0)
                 printf("\n");
-            printf("%f ", data[sample*samples+observation]);
+            printf("%f ", data[s * observations + o]);
         }
         printf("\n");
     }
 }
 
 void displayCentroids(int clusters, int observations, double centroids[][observations]) {
-    for (int cluster = 0; cluster < clusters; cluster++) {
-        printf("Centroid %d: ", cluster+1);
-        for (int observation = 0; observation < observations; observation++) {
-            if (observation % 8 == 0 && observation != 0)
+    for (int c = 0; c < clusters; c++) {
+        printf("Centroid %d: ", c+1);
+        for (int o = 0; o < observations; o++) {
+            if (o % 8 == 0 && o != 0)
                 printf("\n");
-            printf("%f ", centroids[cluster][observation]);
+            printf("%f ", centroids[c][o]);
         }
         printf("\n");
     }
 }
 
-// loss func: euclidean diff between observations in series and centroid
-double distance(double *series, double *centroid, int observations) {
-    double dist = 0.0;
-    for (int o = 0; o < observations; o++)
-        dist += fabs(series[o] - centroid[o]);
-    return dist;
-}
 
+// helper function to avoid duplicate initial centroids
 bool isAlreadyCentroid(int sampleNo, int *sampleNoInCluster, int clusters) {
     for (int i = 0; i < clusters; i++)
         if (sampleNoInCluster[i] == sampleNo)
             return true;
     return false;
+}
+
+// function to generate random samples
+void generateSamples(double *data, int samples, int observations) {
+    srand(time(NULL));
+    for (int s = 0; s < samples; s++)
+        for (int o = 0; o < observations; o++)
+            data[s * observations + o] = (double)rand() / RAND_MAX * 10.0 - 5.0;
+}
+
+/* *********************************************************************
+******************************* K-MEANS *******************************
+********************************************************************* */
+
+// "loss func": euclidean diff between observations in series and centroid
+double distance(double *series, double *centroid, int observations) {
+    double dist = 0.0;
+    for (int o = 0; o < observations; o++)
+        dist += fabs(series[o] - centroid[o]);
+    return dist;
 }
 
 // ORIGINAL: void kmeans(int *assignment, int K, int max_iter, int n_samples, int m_features, double *data)
@@ -60,20 +71,20 @@ bool isAlreadyCentroid(int sampleNo, int *sampleNoInCluster, int clusters) {
 // n_samples -> samples
 // m_features -> observations
 void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, int samples, int observations) {
-    double centroids[clusters][observations];
+    double *centroids = malloc(clusters * observations * sizeof(double));
     double previousCost = 0.0;
 
-    // to keep track of which samples are already centroids
+    // to avoid duplicate initial centroids
     int sampleNoInCentroids[clusters];
     for (int i = 0; i < clusters; i++)
         sampleNoInCentroids[i] = -1;
 
-    // randomly select initial centroids
-    for (int i = 0; i < clusters; i++) {
-        int randomSample = -1;
+    // randomly select initial centroids (random samples)
+    for (int c = 0; c < clusters; c++) {
+        int randomSample;
         while (isAlreadyCentroid(randomSample = rand() % samples, sampleNoInCentroids, clusters));
-        sampleNoInCentroids[i] = randomSample;
-        memcpy(centroids[i], &data[randomSample], observations * sizeof(double));
+        sampleNoInCentroids[c] = randomSample;
+        memcpy(&centroids[c], &data[randomSample], observations * sizeof(double));
     }
 
     // displayCentroids(clusters, observations, centroids);
@@ -86,7 +97,7 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
     // for (int s = 0; s < samples; s++) {
     //     printf("Initial mapping: TS %d -> C %d\n", s+1, clusterAssignments[s]+1);
     // }
-    
+
     for (int iter = 0; iter < max_iter; iter++) {
         // update each cluster's centroid
         for (int c = 0; c < clusters; c++) {
@@ -107,8 +118,8 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
             for (int o = 0; o < observations; o++) {
                 double sum = 0.0;
                 for (int s = 0; s < clusterSize; s++)
-                    sum += data[samplesInCluster[s] * samples + o];
-                centroids[c][o] = sum / clusterSize;
+                    sum += data[samplesInCluster[s] * observations + o];
+                centroids[c * observations + o] = sum / clusterSize;
             }
         }
         
@@ -123,7 +134,7 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
             
             for (int c = 0; c < clusters; c++) {
                 double currentDistance = 
-                    distance(&data[s * samples], centroids[c], observations);
+                    distance(&data[s * observations], &centroids[c], observations);
                 if (currentDistance < minDistance) {
                     minDistance = currentDistance;
                     closestCluster = c;
@@ -142,22 +153,40 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
             previousCost = newCost;
         }
     }
+
+    free(centroids);
 }
 
 int main(int argc, char *argv[]) {
-    if (argc != 4) {
-        printf("Usage: %s <samples> <observations> <clusters>\n", argv[0]);
+    if (argc != 3 && argc != 5) {
+        printf("Usage: %s rand/iris/bme clusters [samples] [observations]\n", argv[0]);
         return 1;
     }
 
-    int samples = atoi(argv[1]);
-    int observations = atoi(argv[2]);
-    int clusters = atoi(argv[3]);
+    double *data;
+    int samples, observations;
+    char *dataset = argv[1];
+    int clusters = atoi(argv[2]);
 
     // first level array: samples, 
     // second level array observations in each sample
-    double *data = malloc(samples * observations * sizeof(double*));
-    genTimeSeriesSamples(data, samples, observations);
+    if (strcmp(dataset, "rand") == 0) {
+        samples = atoi(argv[3]);
+        observations = atoi(argv[4]);
+        data = malloc(samples * observations * sizeof(double));
+        generateSamples(data, samples, observations);
+    } else if (strcmp(dataset, "iris") == 0) {
+        samples = sizeof(iris_data) / sizeof(iris_data[0]);
+        observations = sizeof(iris_data[0]) / sizeof(iris_data[0][0]);
+        data = &iris_data[0][0];
+    } else if (strcmp(dataset, "bme") == 0) {
+        samples = sizeof(bme_data) / sizeof(bme_data[0]);
+        observations = sizeof(bme_data[0]) / sizeof(bme_data[0][0]);
+        data = &bme_data[0][0];
+    } else {
+        printf("invalid dataset selection '%s'! (rand/iris/bme)\n", dataset);
+        exit(1);
+    }
 
     // display initial data
     // displayTimeSeries(data, samples, observations);
@@ -167,7 +196,8 @@ int main(int argc, char *argv[]) {
     int max_iter = 100;
     kmeans(data, clusterAssignments, max_iter, clusters, samples, observations);
     
-    free(data);
+    if (strcmp(dataset, "rand") == 0)
+        free(data);
 
     printf("\nSymbol Table:\n");
     for (int i = 0; i < samples; i++) {
