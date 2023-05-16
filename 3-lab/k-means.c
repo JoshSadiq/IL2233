@@ -137,7 +137,6 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
     double newCost, previousCost = 0.0;
 
     initCentroids(centroids, data, clusters, samples, observations);
-    displayCentroids(clusters, observations, centroids);
     
     // assign samples to random clusters
     for (int s = 0; s < samples; s++)
@@ -162,8 +161,6 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
         updateCentroids(centroids, data, clusterAssignments, clusters, samples, observations);
         // displayCentroids(clusters, observations, centroids);
     }
-
-    displayCentroids(clusters, observations, centroids);
 
     free(centroids);
 }
