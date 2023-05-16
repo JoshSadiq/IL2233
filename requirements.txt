@@ -4,3 +4,4 @@ pandas
 statsmodels
 pmdarima
 sklearn
+sklearn_som

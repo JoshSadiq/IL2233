@@ -47,7 +47,6 @@ bool isAlreadyCentroid(int sampleNo, int *sampleNoInCluster, int clusters) {
 
 // function to generate random samples
 void generateSamples(double *data, int samples, int observations) {
-    srand(time(NULL));
     for (int s = 0; s < samples; s++)
         for (int o = 0; o < observations; o++)
             data[s * observations + o] = (double)rand() / RAND_MAX * 10.0 - 5.0;
@@ -75,6 +74,7 @@ void initCentroids(double *centroids, double *data, int clusters, int samples, i
     for (int c = 0; c < clusters; c++) {
         while (isAlreadyCentroid(randomSampleNo = rand() % samples, sampleNoInCentroids, clusters));
         sampleNoInCentroids[c] = randomSampleNo;
+        printf("selected sample %d as centroid %d\n", randomSampleNo+1, c+1);
         memcpy(
             &centroids[c * observations], 
             &data[randomSampleNo * observations], 
@@ -96,12 +96,13 @@ void updateCentroids(double *centroids, double *data, int *clusterAssignments, i
         //     printf("Found mapping: TS %d -> C %d\n", samplesInCluster[i]+1, c+1);
 
         // average of observations at each time step
-        for (int o = 0; o < observations; o++) {
-            double sum = 0.0;
-            for (int s = 0; s < clusterSize; s++)
-                sum += data[samplesInCluster[s] * observations + o];
-            centroids[c * observations + o] = sum / clusterSize;
-        }
+        if (clusterSize > 0)
+            for (int o = 0; o < observations; o++) {
+                double sum = 0.0;
+                for (int s = 0; s < clusterSize; s++)
+                    sum += data[samplesInCluster[s] * observations + o];
+                centroids[c * observations + o] = sum / clusterSize;
+            }
     }
 }
 
@@ -137,7 +138,7 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
     double newCost, previousCost = 0.0;
 
     initCentroids(centroids, data, clusters, samples, observations);
-    // displayCentroids(clusters, observations, centroids);
+    displayCentroids(clusters, observations, centroids);
     
     // assign samples to random clusters
     for (int s = 0; s < samples; s++)
@@ -163,6 +164,8 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
         }
 
     }
+
+    displayCentroids(clusters, observations, centroids);
 
     free(centroids);
 }
@@ -240,6 +243,8 @@ int main(int argc, char *argv[]) {
         printf("Usage: %s rand/iris/bme clusters [samples] [observations]\n", argv[0]);
         return 1;
     }
+
+    srand(time(NULL));
 
     double *data;
     int samples, observations;

@@ -120,7 +120,9 @@ int main(int argc, char *argv[]) {
     }
 
     pos_t *assignments = malloc(n_samples * sizeof(pos_t));
+    clock_t start = clock();
     SOM(assignments, data, n_samples, m_features, height, width, max_iter, lr, sigma);
+    clock_t end = clock();
 
     for (int s = 0; s < n_samples; s++) {
         printf("(%d, %d) ", assignments[s].x, assignments[s].y);
@@ -133,7 +135,9 @@ int main(int argc, char *argv[]) {
     if (strcmp(dataset, "rand") == 0)
         free(data);
     free(assignments);
+    printf("\nTime elapsed: %.7f seconds\n", (double)(end - start) / CLOCKS_PER_SEC);
     return 0;
+
 }
 
 
