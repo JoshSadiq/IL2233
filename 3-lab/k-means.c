@@ -67,16 +67,18 @@ double distance(double *series, double *centroid, int observations) {
 
 void initCentroids(double *centroids, double *data, int clusters, int samples, int observations) {
     // to avoid duplicate initial centroids
-    int sampleNoInCentroids[clusters];
-    for (int i = 0; i < clusters; i++)
-        sampleNoInCentroids[i] = -1;
-
-    // randomly select initial centroids (random samples)
     int randomSampleNo;
+    int sampleNoInCentroids[clusters];
+    memset(sampleNoInCentroids, -1, clusters * sizeof(int));
+
+    // random samples become centroids
     for (int c = 0; c < clusters; c++) {
         while (isAlreadyCentroid(randomSampleNo = rand() % samples, sampleNoInCentroids, clusters));
         sampleNoInCentroids[c] = randomSampleNo;
-        memcpy(&centroids[c], &data[randomSampleNo], observations * sizeof(double));
+        memcpy(
+            &centroids[c * observations], 
+            &data[randomSampleNo * observations], 
+            observations * sizeof(double));
     }
 }
 
@@ -108,20 +110,18 @@ double updateAssignments(double *centroids, double *data, int *clusterAssignment
     // re-assign samples to the cluster whose centroid is closest
     for (int s = 0; s < samples; s++) {
         double minDistance = DBL_MAX;
-        int closestCluster = clusterAssignments[s];
-        // printf("Sample %d closest to %d\n", s+1, closestCluster);
+        // printf("Sample %d closest to %d\n", s+1,  clusterAssignments[s]);
         
         for (int c = 0; c < clusters; c++) {
             double currentDistance = 
                 distance(&data[s * observations], &centroids[c], observations);
             if (currentDistance < minDistance) {
                 minDistance = currentDistance;
-                closestCluster = c;
+                clusterAssignments[s] = c;
             }
         }
         // printf("Sample %d closest to %d\n", s+1, closestCluster);
         cost += minDistance;
-        clusterAssignments[s] = closestCluster;
     }
 
     return cost;
@@ -148,10 +148,13 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
     //     printf("Initial mapping: TS %d -> C %d\n", s+1, clusterAssignments[s]+1);
 
     for (int iter = 0; iter < max_iter; iter++) {
+        updateCentroids(centroids, data, clusterAssignments, clusters, samples, observations);
+        // displayCentroids(clusters, observations, centroids);
+
         newCost = 
             updateAssignments(centroids, data, clusterAssignments, clusters, samples, observations);
 
-        printf("Cost: %f\n", newCost);
+        // printf("Cost: %f\n", newCost);
         if (fabs(newCost - previousCost) < 1.0) {
             printf("Converged after %d iterations\n", iter+1);
             break;
@@ -159,13 +162,10 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
             previousCost = newCost;
         }
 
-        updateCentroids(centroids, data, clusterAssignments, clusters, samples, observations);
-        // displayCentroids(clusters, observations, centroids);
     }
 
     free(centroids);
 }
-
 
 bool testImpl() {
     double data[3][6] = {
@@ -233,8 +233,8 @@ bool testImpl() {
 }
 
 int main(int argc, char *argv[]) {
-    if (testImpl() == false)
-        return 1;
+    // if (!testImpl())
+    //     return 1;
 
     if (argc != 3 && argc != 5) {
         printf("Usage: %s rand/iris/bme clusters [samples] [observations]\n", argv[0]);
@@ -270,19 +270,25 @@ int main(int argc, char *argv[]) {
     // displayTimeSeries(data, samples, observations);
 
     int *clusterAssignments = malloc(samples * sizeof(int));
-
     int max_iter = 100;
+
+    clock_t start = clock();
     kmeans(data, clusterAssignments, max_iter, clusters, samples, observations);
-    
+    clock_t end = clock();
+
     if (strcmp(dataset, "rand") == 0)
         free(data);
 
-    printf("\nSymbol Table:\n");
+    // print final mapping as S:# -> C:# with four entries per line and use padding for better alignment
+    printf("\nFinal mapping:\n");
     for (int i = 0; i < samples; i++) {
-        printf("Time series %d -> Cluster %d\n", i+1, clusterAssignments[i]+1);
+        printf("S:%-3d -> C:%d\t", i+1, clusterAssignments[i]+1);
+        if ((i+1) % 4 == 0) printf("\n");
     }
 
     free(clusterAssignments);
     
+    printf("\nTime elapsed: %.7f seconds\n", (double)(end - start) / CLOCKS_PER_SEC);
+
     return 0;
 }
