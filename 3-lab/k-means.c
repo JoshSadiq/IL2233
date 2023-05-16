@@ -74,7 +74,6 @@ void initCentroids(double *centroids, double *data, int clusters, int samples, i
     for (int c = 0; c < clusters; c++) {
         while (isAlreadyCentroid(randomSampleNo = rand() % samples, sampleNoInCentroids, clusters));
         sampleNoInCentroids[c] = randomSampleNo;
-        printf("selected sample %d as centroid %d\n", randomSampleNo+1, c+1);
         memcpy(
             &centroids[c * observations], 
             &data[randomSampleNo * observations], 
@@ -115,7 +114,7 @@ double updateAssignments(double *centroids, double *data, int *clusterAssignment
         
         for (int c = 0; c < clusters; c++) {
             double currentDistance = 
-                distance(&data[s * observations], &centroids[c], observations);
+                distance(&data[s*observations], &centroids[c*observations], observations);
             if (currentDistance < minDistance) {
                 minDistance = currentDistance;
                 clusterAssignments[s] = c;
@@ -149,9 +148,6 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
     //     printf("Initial mapping: TS %d -> C %d\n", s+1, clusterAssignments[s]+1);
 
     for (int iter = 0; iter < max_iter; iter++) {
-        updateCentroids(centroids, data, clusterAssignments, clusters, samples, observations);
-        // displayCentroids(clusters, observations, centroids);
-
         newCost = 
             updateAssignments(centroids, data, clusterAssignments, clusters, samples, observations);
 
@@ -163,6 +159,8 @@ void kmeans(double *data, int *clusterAssignments, int max_iter, int clusters, i
             previousCost = newCost;
         }
 
+        updateCentroids(centroids, data, clusterAssignments, clusters, samples, observations);
+        // displayCentroids(clusters, observations, centroids);
     }
 
     displayCentroids(clusters, observations, centroids);
